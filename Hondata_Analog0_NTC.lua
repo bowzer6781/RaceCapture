@@ -76,6 +76,7 @@ function getResistance(Vout)
 end
 
 function getTemperature(Rt)
+  --Calculates Temperature using Steinhart Coeffcients and known B-parameter based on the NTC Sensor
   local Rr = 47000
   local A = 0.00335424143829873
   local B = 0.000263157894736842
@@ -102,10 +103,10 @@ function getVoltage(b1, b2)
    --Concatenates the HEX values together and convert to Decimal
    local decimalvalue = tonumber(byte1..byte2, 16)
    
-   --Nil Handler to deal with 0 decimal value to prevent divide by zero error.
+   --Handler to deal with 0 decimal value to prevent divide by zero error.
    if decimalvalue == nil then
      decimalvalue = '20480'
-     print('No Value Detected setting decimal value to 20480')
+     print('No Value Detected setting decimal value to 20480 25degC')
     end
    --Convert Decimal value with dividers to calculate Voltage
    local voltage = decimalvalue/819.2
@@ -128,7 +129,7 @@ function onTick()
   OilTemp = outputTemp(1,2)
  --Convert A1 Engine Oil Temp Voltage to Temperature Bytes 3, 4
   EngineTemp = outputTemp(3,4)
- --Assign Virtual Channels with Calculated Temperatures
+
  setChannel(idA0, OilTemp)
  setChannel(idA1, EngineTemp)
  println('')
