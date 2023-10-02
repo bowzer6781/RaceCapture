@@ -106,7 +106,7 @@ function getVoltage(b1, b2)
    --Handler to deal with 0 decimal value to prevent divide by zero error.
    if decimalvalue == nil then
      decimalvalue = '20480'
-     print('No Value Detected setting decimal value to 20480 25degC')
+     print('Nil Value Detected setting decimal value to 20480 25degC')
     end
    --Convert Decimal value with dividers to calculate Voltage
    local voltage = decimalvalue/819.2
@@ -133,9 +133,8 @@ function onTick()
  setChannel(idA0, OilTemp)
  setChannel(idA1, EngineTemp)
  println('')
- print('Transmission Temp on A0 is: '.. OilTemp)
- println('')
- print('      Engine Oil Temp on A1 is: '.. EngineTemp)
+ println('Transmission Temp on A0 is: '.. OilTemp)
+ println('      Engine Oil Temp on A1 is: '.. EngineTemp)
  println('') 
 end
 
