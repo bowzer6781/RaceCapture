@@ -1,0 +1,7 @@
+!edit autostart file and add the bash script
+!/etc/xdg/lxsession/LXDE-pi/autostart
+
+@lxpanel --profile LXDE
+@pcmanfm --desktop --profile LXDE
+@xscreensaver -no-splash
+@bash /opt/racecapture/run_racecapture_rpi.sh
