@@ -1,10 +1,13 @@
 --LUA Script to Read CANBUS Messages from Hondata KPRO or S300 Analog Channels
 --Using Steinhart equation to convert Thermosister resistance to equivalent Temperature
---Last Update 30/09/2023
+--Last Update 02/10/2023
 --Author: B Pham
 --Email: bowzer6781@gmail.com
 -- Log messages from CAN bus
 -- be sure to set the correct baud rate in the CAN settings
+-- Changes 02/10/2023
+
+
 
 --------------------------------------------------
 -- change this to 0 for CAN bus 1, or 1 for CAN bus 2
@@ -48,6 +51,10 @@ end
 function toHEXString(dec_value)
  --Returns a concatenated Hex string and converts to string and to dec
  local hexstr = DECtoHEX(dec_value)
+ --Nil handler to set hex value not equal to zero
+ if hexstr == nil then
+   hexstr = 'F' .. hexstr
+  end
  -- If the HEX value contains only 1 character add 0
  if string.len(hexstr) == 1 then
    hexstr = '0' .. hexstr
@@ -57,7 +64,7 @@ end
 
 function getResistance(Vout)
  --Calculates the R2 of a voltage divider circuit.
-  --If Vout is nil then set a value for formula to execute
+  -- If the HEX value contains only 1 character add 0
  if Vout == nil then
    Vout = 5
   end
@@ -74,16 +81,15 @@ function getTemperature(Rt)
   local B = 0.000263157894736842
   local C = -0.0000001322547409
   local D = 0
-  --use Steinhart equation and Coeffcients to calculate Temperature based on Resistance in Celsius
   local inv_temperature = A + B * math.log(Rt / Rr) + C * math.log(math.pow(Rt / Rr, 2)) + D * math.log(math.pow(Rt / Rr, 3))
   local temperature = 1/inv_temperature - 273.15
 
   return temperature
 end
 
---Declare Virtual Channels, sample rate, precision, range and units
-idA0 = addChannel("GearboxTemp", 5, 1, -20, 150, 'C')
-idA1 = addChannel("OilTemp", 5, 1, -20, 150, 'C')
+--Declare Channels
+idA0 = addChannel("OilTemp", 5, 2, -20, 150, 'C')
+idA1 = addChannel("EngineTemp", 5, 2, -20, 150, 'C')
 
 function getVoltage(b1, b2)
  repeat 
@@ -95,7 +101,13 @@ function getVoltage(b1, b2)
 
    --Concatenates the HEX values together and convert to Decimal
    local decimalvalue = tonumber(byte1..byte2, 16)
-   --Calculate Decimal value devided by 819.2 Divider to obtain Voltage
+   
+   --Nil Handler to deal with 0 decimal value to prevent divide by zero error.
+   if decimalvalue == nil then
+     decimalvalue = '20480'
+     print('No Value Detected setting decimal value to 20480')
+    end
+   --Convert Decimal value with dividers to calculate Voltage
    local voltage = decimalvalue/819.2
    return voltage
   end
@@ -105,7 +117,6 @@ function getVoltage(b1, b2)
 end
 
 function outputTemp(b1, b2)
- --Function to output the temperature using the various functions to calculate temperature based on voltage
  local voltage = getVoltage(b1, b2)
  local resistance = getResistance(voltage)
  local temperature = getTemperature (resistance)
@@ -113,17 +124,17 @@ function outputTemp(b1, b2)
 end
 
 function onTick()
- --Convert A0 Trans Temp Voltage to Temperature Bytes 1, 2
-  TransTemp = outputTemp(1,2)
- --Convert A1 Oil Temp Voltage to Temperature Bytes 3, 4
-  OilTemp = outputTemp(3,4)
- --Assign Temperatures to Virtual Channels
- setChannel(idA0, TransTemp)
- setChannel(idA1, OilTemp)
+ --Convert A0 Gearbox Temp Voltage to Temperature Bytes 1, 2
+  OilTemp = outputTemp(1,2)
+ --Convert A1 Engine Oil Temp Voltage to Temperature Bytes 3, 4
+  EngineTemp = outputTemp(3,4)
+ --Assign Virtual Channels with Calculated Temperatures
+ setChannel(idA0, OilTemp)
+ setChannel(idA1, EngineTemp)
  println('')
- print('Transmission Temp on A0 is: '.. TransTemp)
+ print('Transmission Temp on A0 is: '.. OilTemp)
  println('')
- print('      Engine Oil Temp on A1 is: '.. OilTemp)
+ print('      Engine Oil Temp on A1 is: '.. EngineTemp)
  println('') 
 end
 
